@@ -53,15 +53,19 @@ async def on_ready() -> None:
 @bot.hybrid_command(name="sync", description="sync slash commands")
 @commands.guild_only()
 @commands.is_owner()
-async def sync(ctx, scope: str = "global"):
-    if scope == "global":
+async def sync(ctx, scope: str = "local"):
+    if scope == "local":
+        guild = discord.Object(id=ctx.guild.id)
+        bot.tree.copy_global_to(guild=guild)
+        print(f"Syncing commands for guild: {ctx.guild.id}...")
+        synced = await bot.tree.sync(guild=guild)
+        await ctx.send(f"Synced {len(synced)} commands to the current guild.")
+
+    else:
         print("Syncing commands globally...")
         synced = await bot.tree.sync()
         await ctx.send(f"Synced {len(synced)} commands globally.")
-    else:
-        print(f"Syncing commands for guild: {ctx.guild.id}...")
-        synced = await bot.tree.sync(guild=discord.Object(id=ctx.guild.id))
-        await ctx.send(f"Synced {len(synced)} commands to the current guild.")
+
     return
 
 
@@ -84,7 +88,6 @@ async def status_task() -> None:
 async def on_message(message: discord.Message) -> None:
     """
     The code in this event is executed every time someone sends a message, with or without the prefix
-
     :param message: The message that was sent.
     """
     if message.author == bot.user or message.author.bot:
